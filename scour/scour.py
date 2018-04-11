@@ -546,6 +546,22 @@ def findElementsWithId(node, elems=None):
     return elems
 
 
+def findElementsWithNodeName(startNode, nodeNames):
+    """
+    A generator that yields all elments with specific node names from a given elment
+    and down.
+    """
+
+    if startNode.nodeName in nodeNames:
+        yield startNode
+
+    for childNode in startNode.childNodes:
+        if childNode.nodeType == Node.ELEMENT_NODE:
+            # Emulate yield from to support pyhon2.7
+            for n in findElementsWithNodeName(childNode, nodeNames):
+                yield n
+
+
 referencingProps = ['fill', 'stroke', 'filter', 'clip-path', 'mask',  'marker-start', 'marker-end', 'marker-mid']
 
 
@@ -3469,20 +3485,19 @@ def scourString(in_string, options=None):
 
     # remove empty defs, metadata, g
     # NOTE: these elements will be removed if they just have whitespace-only text nodes
-    for tag in ['defs', 'title', 'desc', 'metadata', 'g']:
-        for elem in doc.documentElement.getElementsByTagName(tag):
-            removeElem = not elem.hasChildNodes()
-            if removeElem is False:
-                for child in elem.childNodes:
-                    if child.nodeType in [Node.ELEMENT_NODE, Node.CDATA_SECTION_NODE, Node.COMMENT_NODE]:
-                        break
-                    elif child.nodeType == Node.TEXT_NODE and not child.nodeValue.isspace():
-                        break
-                else:
-                    removeElem = True
-            if removeElem:
-                elem.parentNode.removeChild(elem)
-                _num_elements_removed += 1
+    for elem in findElementsWithNodeName(doc, {'defs', 'title', 'desc', 'metadata', 'g'}):
+        removeElem = not elem.hasChildNodes()
+        if removeElem is False:
+            for child in elem.childNodes:
+                if child.nodeType in [Node.ELEMENT_NODE, Node.CDATA_SECTION_NODE, Node.COMMENT_NODE]:
+                    break
+                elif child.nodeType == Node.TEXT_NODE and not child.nodeValue.isspace():
+                    break
+            else:
+                removeElem = True
+        if removeElem:
+            elem.parentNode.removeChild(elem)
+            _num_elements_removed += 1
 
     if options.strip_ids:
         referencedIDs = findReferencedElements(doc.documentElement)
