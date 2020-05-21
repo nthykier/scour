@@ -74,6 +74,9 @@ VER = __version__
 COPYRIGHT = u'Copyright Jeff Schiller, Louis Simard, 2010'
 
 
+# Used to split values where "x y" or "x,y" or a mix of the two is allowed
+SPACE_COMMA_SEPARATOR = re.compile(r"\s*[\s,]\s*")
+
 XML_ENTS_NO_QUOTES = {'<': '&lt;', '>': '&gt;', '&': '&amp;'}
 XML_ENTS_ESCAPE_APOS = XML_ENTS_NO_QUOTES.copy()
 XML_ENTS_ESCAPE_APOS["'"] = '&apos;'
@@ -2738,7 +2741,7 @@ def parseListOfPoints(s):
     # coordinate-pair = coordinate comma-or-wsp coordinate
     # coordinate = sign? integer
     # comma-wsp: (wsp+ comma? wsp*) | (comma wsp*)
-    ws_nums = re.split(r"\s*[\s,]\s*", s.strip())
+    ws_nums = SPACE_COMMA_SEPARATOR.split(s.strip())
     nums = []
 
     # also, if 100-100 is found, split it into two also
@@ -3351,7 +3354,7 @@ def properlySizeDoc(docElement, options):
     # else we have a statically sized image and we should try to remedy that
 
     # parse viewBox attribute
-    vbSep = re.split('[, ]+', docElement.getAttribute('viewBox'))
+    vbSep = SPACE_COMMA_SEPARATOR.split(docElement.getAttribute('viewBox'))
     # if we have a valid viewBox we need to check it
     vbWidth, vbHeight = 0, 0
     if len(vbSep) == 4:
@@ -3810,7 +3813,7 @@ def scourString(in_string, options=None):
                     elem.setAttribute(attr, scourLength(elem.getAttribute(attr)))
     viewBox = doc.documentElement.getAttribute('viewBox')
     if viewBox:
-        lengths = re.split('[, ]+', viewBox)
+        lengths = SPACE_COMMA_SEPARATOR.split(viewBox)
         lengths = [scourUnitlessLength(length) for length in lengths]
         doc.documentElement.setAttribute('viewBox', ' '.join(lengths))
 
